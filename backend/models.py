@@ -32,24 +32,45 @@ class BankAccount(db.Model):
 
     def deposit(self, amount):
         """
-        Deposits an amount into the account.
+        Deposits an amount into the account and records the transaction.
         :param amount: The amount to add to the balance.
         """
         if isinstance(amount, str):
             amount = float(amount)
         self.balance += amount
+        # Record the transaction
+        transaction = Transaction(type="deposit", amount=amount, bank_account_id=self.id)
+        db.session.add(transaction)
 
     def withdraw(self, amount):
         """
-        Withdraws an amount from the account.
+        Withdraws an amount from the account and records the transaction.
         :param amount: The amount to subtract from the balance.
         """
         if isinstance(amount, str):
             amount = float(amount)
         self.balance -= amount
+        # Record the transaction
+        transaction = Transaction(type="withdraw", amount=amount, bank_account_id=self.id)
+        db.session.add(transaction)
+
 
     def __repr__(self):
         return f"<BankAccount {self.id} - Balance: {self.balance}>"
+
+
+class Transaction(db.Model):
+    """
+    Transaction model representing a transaction in the online banking system.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(10), nullable=False)  # 'deposit' or 'withdraw'
+    amount = db.Column(db.Float, nullable=False)
+    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp(), nullable=False)
+    bank_account_id = db.Column(db.Integer, db.ForeignKey('bank_account.id'), nullable=False)
+
+    def __repr__(self):
+        return f"<Transaction {self.id} - {self.type} {self.amount}>"
 
 
 

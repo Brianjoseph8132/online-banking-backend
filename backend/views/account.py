@@ -1,4 +1,4 @@
-from models import BankAccount, db, User
+from models import BankAccount, db, User, Transaction
 from flask import jsonify, request
 from werkzeug.security import generate_password_hash
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -103,3 +103,34 @@ def withdraw():
         return jsonify({"message": "Withdraw successful"}), 200
     else:
         return jsonify({"message": "Insufficient balance"}), 400
+
+
+
+# Transaction History API
+@account_bp.route("/transaction_history", methods=["GET"])
+@jwt_required()
+def transaction_history():
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    if not user.bank_account:
+        return jsonify({"message": "No bank account found"}), 404
+
+    # Fetch all transactions for the user's bank account
+    transactions = Transaction.query.filter_by(bank_account_id=user.bank_account.id).all()
+
+    # Format the transactions for the response
+    transaction_history = [
+        {
+            "id": transaction.id,
+            "type": transaction.type,
+            "amount": transaction.amount,
+            "timestamp": transaction.timestamp.isoformat(),
+        }
+        for transaction in transactions
+    ]
+
+    return jsonify({"transactions": transaction_history}), 200
