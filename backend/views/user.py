@@ -2,6 +2,7 @@ from models import User,db
 from flask import jsonify,request, Blueprint
 from werkzeug.security import generate_password_hash
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import request
 
 
 
@@ -13,14 +14,26 @@ user_bp = Blueprint("user_bp", __name__)
 @user_bp.route("/users", methods=["POST"])
 def add_users():
     data = request.get_json()
-    username = data['username']
-    email = data['email']
-    password = generate_password_hash(data['password']) 
+    username = data.get('username')
+    email = data.get('email')
+    raw_password = data.get('password')  # Get the original password
+
+    # # Debugging prints
+    # print("Username:", username)
+    # print("Email:", email)
+    # print("Raw password:", raw_password)
+
+
+    # Validate password length before hashing
+    if not isinstance(raw_password, str) or len(raw_password) != 8:
+        return jsonify({"error": "Password must be exactly 8 characters"}), 400
+
+    password = generate_password_hash(raw_password)  # Hash the password
 
     check_username = User.query.filter_by(username=username).first()
     check_email = User.query.filter_by(email=email).first()
 
-
+    
 
     if check_username or check_email:
         return jsonify({"error":"Username/email exists"}), 404

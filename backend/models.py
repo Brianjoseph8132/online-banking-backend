@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
+from werkzeug.security import generate_password_hash, check_password_hash
 
 metadata = MetaData()
 
@@ -29,6 +30,14 @@ class BankAccount(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     balance = db.Column(db.Float, default=0.0, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    pin = db.Column(db.String(128), nullable=False)
+
+    def set_pin(self, pin):
+        """
+        Set the pin for the bank account (hashes the pin before storing).
+        :param pin: The pin to hash and store.
+        """
+        self.pin = generate_password_hash(pin)
 
     def deposit(self, amount):
         """
